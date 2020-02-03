@@ -12,7 +12,7 @@ See [action.yml](./action.yml)
 
 Basic:
 
-```
+```yaml
 steps:
 - uses: actions/checkout@v1
 
@@ -26,17 +26,17 @@ steps:
 
 Download to specific directory:
 
-```
+```yaml
 steps:
-- uses: actions/checkout@v1
+  - uses: actions/checkout@v1
 
-- uses: fixpoint/azblob-download-artifact@v1
-  with:
-    connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-    name: my-artifact
-    path: path/to/artifact
+  - uses: fixpoint/azblob-download-artifact@v1
+    with:
+      connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      name: my-artifact
+      path: path/to/artifact
 
-- run: cat path/to/artifact
+  - run: cat path/to/artifact
 ```
 
 ## License
