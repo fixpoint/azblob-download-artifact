@@ -1,0 +1,29 @@
+name: 'Download a Build Artifact from Azure Blob Storage'
+description: 'Download a build artifact that was previously uploaded in the workflow by the azblob-upload-artifact action from Azure Blob Storage'
+author: 'fixpoint'
+branding:
+  icon: 'sunset'
+  color: 'gray-dark'
+inputs:
+  name:
+    description: 'Artifact name'
+    required: true
+  path:
+    description: 'Destination path'
+    required: false
+  connection-string:
+    description: 'Connection string'
+    required: true
+  container:
+    description: 'Container name'
+    required: false
+    default: 'github-action-artifacts'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - '${{ inputs.container }}'
+    - '${{ inputs.name }}'
+    - '${{ inputs.path }}'
+  env:
+    AZURE_STORAGE_CONNECTION_STRING: ${{ inputs.connection-string }}
