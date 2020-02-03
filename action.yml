@@ -5,24 +5,20 @@ branding:
   icon: 'sunset'
   color: 'gray-dark'
 inputs:
+  connection-string:
+    description: 'Connection string'
+    required: true
   name:
     description: 'Artifact name'
     required: true
   path:
     description: 'Destination path'
     required: false
-  connection-string:
-    description: 'Connection string'
-    required: true
-  container:
-    description: 'Container name'
-    required: false
-    default: 'github-action-artifacts'
+    default: '.'
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - '${{ inputs.container }}'
     - '${{ inputs.name }}'
     - '${{ inputs.path }}'
   env:
