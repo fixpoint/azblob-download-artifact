@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - uses: fixpoint/azblob-download-artifact@${{ github.sha }}
+      - uses: ./
         with:
           connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           name: 'azblob-download-artifact'
@@ -20,7 +20,7 @@ jobs:
           cat Download.txt
           cat Upload.txt
 
-      - uses: fixpoint/azblob-download-artifact@${{ github.sha }}
+      - uses: ./
         with:
           connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           name: 'azblob-download-artifact'
