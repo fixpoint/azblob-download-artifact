@@ -30,7 +30,7 @@ Download to specific directory:
 steps:
 - uses: actions/checkout@v1
 
-- uses: fixpoint/azblob-download-artifact@master
+- uses: fixpoint/azblob-download-artifact@v1
   with:
     connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
     name: my-artifact
