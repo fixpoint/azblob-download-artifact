@@ -1,16 +1,15 @@
 # azblob-download-artifact
 
+![Test](https://github.com/fixpoint/azblob-download-artifact/workflows/Test/badge.svg)
+
 This downloads artifacts from [Azure Blob Storage](https://azure.microsoft.com/ja-jp/services/storage/blobs/).
+It follows usage of [actions/download-artifact](https://github.com/actions/download-artifact) for easy migration.
 
 See also [azblob-upload-artifact](https://github.com/fixpoint/azblob-upload-artifact).
 
 ## Usage
 
-Get [Azure Storage connection strings](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) and save it into secrets.
-
-See [action.yml](./action.yml)
-
-Basic:
+Get [Azure Storage connection strings](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) and specify it to `connection-string` through Github secrets like:
 
 ```yaml
 steps:
@@ -38,6 +37,8 @@ steps:
 
   - run: cat path/to/artifact
 ```
+
+See [action.yml](./action.yml) for more detail.
 
 ## License
 
