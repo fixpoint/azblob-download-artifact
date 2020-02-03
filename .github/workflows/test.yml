@@ -1,0 +1,34 @@
+name: Test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: fixpoint/azblob-download-artifact@master
+        with:
+          connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          name: 'azblob-download-artifact'
+
+      - name: Confirm
+        run: |
+          ls
+          cat Download.txt
+          cat Upload.txt
+
+      - uses: fixpoint/azblob-download-artifact@master
+        with:
+          connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          name: 'azblob-download-artifact'
+          path: 'path/to/download'
+
+      - name: Confirm
+        run: |
+          ls
+          ls path/to/download
+          cat Download.txt
+          cat Upload.txt
