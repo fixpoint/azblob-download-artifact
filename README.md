@@ -4,8 +4,6 @@ This downloads artifacts from [Azure Blob Storage](https://azure.microsoft.com/j
 
 See also [azblob-upload-artifact](https://github.com/fixpoint/azblob-upload-artifact).
 
-**UNDER DEVELOPMENT**
-
 ## Usage
 
 Get [Azure Storage connection strings](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) and save it into secrets.
@@ -18,7 +16,7 @@ Basic:
 steps:
 - uses: actions/checkout@v1
 
-- uses: fixpoint/azblob-download-artifact@master
+- uses: fixpoint/azblob-download-artifact@v1
   with:
     connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
     name: my-artifact
