@@ -15,10 +15,15 @@ inputs:
     description: 'Destination path'
     required: false
     default: '.'
+  container:
+    description: 'Container name'
+    required: false
+    default: 'github-action-artifacts'
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
+    - '${{ inputs.container }}'
     - '${{ inputs.name }}'
     - '${{ inputs.path }}'
   env:
