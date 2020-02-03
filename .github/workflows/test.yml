@@ -20,6 +20,11 @@ jobs:
           test -d azblob-download-artifact
           test -f azblob-download-artifact/Hello.txt
           test -f azblob-download-artifact/World.txt
+          echo "-----------------------------------"
+          ls -1v ./
+          echo "-----------------------------------"
+          ls -1v ./azblob-download-artifact
+          echo "-----------------------------------"
 
       - name: Download to a specific path
         uses: ./
@@ -33,3 +38,8 @@ jobs:
           test -d path/to/download/azblob-download-artifact
           test -f path/to/download/azblob-download-artifact/Hello.txt
           test -f path/to/download/azblob-download-artifact/World.txt
+          echo "-----------------------------------"
+          ls -1v ./path/to/download/
+          echo "-----------------------------------"
+          ls -1v ./path/to/download/azblob-download-artifact
+          echo "-----------------------------------"
