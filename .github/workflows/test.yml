@@ -9,18 +9,25 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - uses: ./
+      - name: Basic usage
+        uses: ./
         with:
           connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           name: 'azblob-download-artifact'
 
       - name: Confirm
         run: |
-          ls
-          cat Download.txt
-          cat Upload.txt
+          test -d azblob-download-artifact
+          test -f azblob-download-artifact/Hello.txt
+          test -f azblob-download-artifact/World.txt
+          echo "-----------------------------------"
+          ls -1v ./
+          echo "-----------------------------------"
+          ls -1v ./azblob-download-artifact
+          echo "-----------------------------------"
 
-      - uses: ./
+      - name: Download to a specific path
+        uses: ./
         with:
           connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           name: 'azblob-download-artifact'
@@ -28,7 +35,11 @@ jobs:
 
       - name: Confirm
         run: |
-          ls
-          ls path/to/download
-          cat Download.txt
-          cat Upload.txt
+          test -d path/to/download/azblob-download-artifact
+          test -f path/to/download/azblob-download-artifact/Hello.txt
+          test -f path/to/download/azblob-download-artifact/World.txt
+          echo "-----------------------------------"
+          ls -1v ./path/to/download/
+          echo "-----------------------------------"
+          ls -1v ./path/to/download/azblob-download-artifact
+          echo "-----------------------------------"
