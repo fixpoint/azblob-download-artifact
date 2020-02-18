@@ -4,10 +4,20 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: npm ci
+      - run: npm run build
 
       - name: Basic usage
         uses: ./
@@ -16,6 +26,7 @@ jobs:
           name: 'azblob-download-artifact'
 
       - name: Confirm
+        shell: bash
         run: |
           find ./azblob-download-artifact
           echo "-----------------------------------"
@@ -32,6 +43,7 @@ jobs:
           path: 'path/to/download'
 
       - name: Confirm
+        shell: bash
         run: |
           find ./path/to/download
           echo "-----------------------------------"
@@ -48,6 +60,7 @@ jobs:
           path: 'path/to/download2'
 
       - name: Confirm
+        shell: bash
         run: |
           find ./path/to/download2
           echo "-----------------------------------"
