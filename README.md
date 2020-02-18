@@ -15,7 +15,7 @@ Get [Azure Storage connection strings](https://docs.microsoft.com/en-us/azure/st
 steps:
 - uses: actions/checkout@v1
 
-- uses: fixpoint/azblob-download-artifact@v2
+- uses: fixpoint/azblob-download-artifact@v3
   with:
     connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
     name: my-artifact
@@ -29,7 +29,7 @@ Download to specific directory:
 steps:
   - uses: actions/checkout@v1
 
-  - uses: fixpoint/azblob-download-artifact@v2
+  - uses: fixpoint/azblob-download-artifact@v3
     with:
       connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
       name: my-artifact
