@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "compile": "ncc build src/index.ts -o dist",
     "build": "tsc -p .",
