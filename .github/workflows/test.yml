@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Basic usage
         uses: ./
@@ -17,14 +17,12 @@ jobs:
 
       - name: Confirm
         run: |
+          find ./azblob-download-artifact
+          echo "-----------------------------------"
           test -d azblob-download-artifact
           test -f azblob-download-artifact/Hello.txt
           test -f azblob-download-artifact/World.txt
-          echo "-----------------------------------"
-          ls -1v ./
-          echo "-----------------------------------"
-          ls -1v ./azblob-download-artifact
-          echo "-----------------------------------"
+          test -f azblob-download-artifact/path/to/nested/Hello.txt
 
       - name: Download to a specific path
         uses: ./
@@ -35,11 +33,23 @@ jobs:
 
       - name: Confirm
         run: |
-          test -d path/to/download/azblob-download-artifact
-          test -f path/to/download/azblob-download-artifact/Hello.txt
-          test -f path/to/download/azblob-download-artifact/World.txt
+          find ./path/to/download
           echo "-----------------------------------"
-          ls -1v ./path/to/download/
+          test -d path/to/download
+          test -f path/to/download/Hello.txt
+          test -f path/to/download/World.txt
+          test -f path/to/download/path/to/nested/Hello.txt
+
+      - name: Download to a specific path
+        uses: ./
+        with:
+          connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          name: 'azblob-download-artifact/path/to'
+          path: 'path/to/download2'
+
+      - name: Confirm
+        run: |
+          find ./path/to/download2
           echo "-----------------------------------"
-          ls -1v ./path/to/download/azblob-download-artifact
-          echo "-----------------------------------"
+          test -d path/to/download2/nested
+          test -f path/to/download2/nested/Hello.txt

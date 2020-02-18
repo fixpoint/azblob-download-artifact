@@ -14,7 +14,7 @@ inputs:
   path:
     description: 'Destination path'
     required: false
-    default: '.'
+    default: ''
   container:
     description: 'Container name'
     required: false
