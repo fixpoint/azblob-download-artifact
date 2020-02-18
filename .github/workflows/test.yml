@@ -35,10 +35,10 @@ jobs:
         run: |
           find ./path/to/download
           echo "-----------------------------------"
-          test -d path/to/download/azblob-download-artifact
-          test -f path/to/download/azblob-download-artifact/Hello.txt
-          test -f path/to/download/azblob-download-artifact/World.txt
-          test -f path/to/download/azblob-download-artifact/path/to/nested/Hello.txt
+          test -d path/to/download
+          test -f path/to/download/Hello.txt
+          test -f path/to/download/World.txt
+          test -f path/to/download/path/to/nested/Hello.txt
 
       - name: Download to a specific path
         uses: ./
