@@ -5,6 +5,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "compile": "ncc build src/index.ts -o dist",
     "build": "tsc -p .",
     "watch": "tsc -p . --watch --preverseWatchOutput",
     "lint": "eslint --max-warnings 0 ./**/*.ts",
@@ -30,13 +31,13 @@
   "homepage": "https://github.com/fixpoint/azblob-download-artifact#readme",
   "dependencies": {
     "@actions/core": "^1.2.2",
-    "@actions/exec": "^1.0.3",
     "@azure/storage-blob": "^12.1.0"
   },
   "devDependencies": {
     "@types/node": "^13.7.1",
     "@typescript-eslint/eslint-plugin": "^2.20.0",
     "@typescript-eslint/parser": "^2.20.0",
+    "@zeit/ncc": "^0.21.1",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-prettier": "^3.1.2",
