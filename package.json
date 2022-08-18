@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/fixpoint/azblob-download-artifact#readme",
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "^1.9.1",
     "@azure/storage-blob": "^12.1.0"
   },
   "devDependencies": {
