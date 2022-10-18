@@ -1,7 +1,7 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import * as core from '@actions/core';
 import { promises as fs } from 'fs';
-import { relative, dirname, join } from 'path';
+import { dirname, join, relative } from 'path';
 
 export async function download(
   connectionString: string,
