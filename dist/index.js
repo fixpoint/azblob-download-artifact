@@ -2244,7 +2244,6 @@ var uuid = __nccwpck_require__(5840);
 var util = __nccwpck_require__(3837);
 var tslib = __nccwpck_require__(2107);
 var xml2js = __nccwpck_require__(6189);
-var abortController = __nccwpck_require__(2557);
 var coreUtil = __nccwpck_require__(1333);
 var logger$1 = __nccwpck_require__(3233);
 var coreAuth = __nccwpck_require__(9645);
@@ -2252,6 +2251,7 @@ var os = __nccwpck_require__(2037);
 var http = __nccwpck_require__(3685);
 var https = __nccwpck_require__(5687);
 var tough = __nccwpck_require__(7372);
+var abortController = __nccwpck_require__(2557);
 var tunnel = __nccwpck_require__(4294);
 var stream = __nccwpck_require__(2781);
 var FormData = __nccwpck_require__(4334);
@@ -2474,7 +2474,7 @@ const Constants = {
     /**
      * The core-http version
      */
-    coreHttpVersion: "2.2.7",
+    coreHttpVersion: "2.3.2",
     /**
      * Specifies HTTP.
      */
@@ -3391,7 +3391,8 @@ function isSpecialXmlProperty(propertyName, options) {
     return [XML_ATTRKEY, options.xmlCharKey].includes(propertyName);
 }
 function deserializeCompositeType(serializer, mapper, responseBody, objectName, options) {
-    var _a;
+    var _a, _b;
+    const xmlCharKey = (_a = options.xmlCharKey) !== null && _a !== void 0 ? _a : XML_CHARKEY;
     if (getPolymorphicDiscriminatorRecursively(serializer, mapper)) {
         mapper = getPolymorphicMapper(serializer, mapper, responseBody, "serializedName");
     }
@@ -3422,6 +3423,16 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
             if (propertyMapper.xmlIsAttribute && responseBody[XML_ATTRKEY]) {
                 instance[key] = serializer.deserialize(propertyMapper, responseBody[XML_ATTRKEY][xmlName], propertyObjectName, options);
             }
+            else if (propertyMapper.xmlIsMsText) {
+                if (responseBody[xmlCharKey] !== undefined) {
+                    instance[key] = responseBody[xmlCharKey];
+                }
+                else if (typeof responseBody === "string") {
+                    // The special case where xml parser parses "<Name>content</Name>" into JSON of
+                    //   `{ name: "content"}` instead of `{ name: { "_": "content" }}`
+                    instance[key] = responseBody;
+                }
+            }
             else {
                 const propertyName = xmlElementName || xmlName || serializedName;
                 if (propertyMapper.xmlIsWrapped) {
@@ -3440,7 +3451,7 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
                       xmlName is "Cors" and xmlElementName is"CorsRule".
                     */
                     const wrapped = responseBody[xmlName];
-                    const elementList = (_a = wrapped === null || wrapped === void 0 ? void 0 : wrapped[xmlElementName]) !== null && _a !== void 0 ? _a : [];
+                    const elementList = (_b = wrapped === null || wrapped === void 0 ? void 0 : wrapped[xmlElementName]) !== null && _b !== void 0 ? _b : [];
                     instance[key] = serializer.deserialize(propertyMapper, elementList, propertyObjectName, options);
                 }
                 else {
@@ -4866,7 +4877,11 @@ class NodeFetchHttpClient {
             body = uploadReportStream;
         }
         const platformSpecificRequestInit = await this.prepareRequest(httpRequest);
-        const requestInit = Object.assign({ body: body, headers: httpRequest.headers.rawHeaders(), method: httpRequest.method, signal: abortController$1.signal, redirect: "manual" }, platformSpecificRequestInit);
+        const requestInit = Object.assign({ body: body, headers: httpRequest.headers.rawHeaders(), method: httpRequest.method, 
+            // the types for RequestInit are from the browser, which expects AbortSignal to
+            // have `reason` and `throwIfAborted`, but these don't exist on our polyfill
+            // for Node.
+            signal: abortController$1.signal, redirect: "manual" }, platformSpecificRequestInit);
         let operationResponse;
         try {
             const response = await this.fetch(httpRequest.url, requestInit);
@@ -5629,49 +5644,6 @@ function updateRetryData(retryOptions, retryData = { retryCount: 0, retryInterva
 }
 
 // Copyright (c) Microsoft Corporation.
-const StandardAbortMessage$1 = "The operation was aborted.";
-/**
- * A wrapper for setTimeout that resolves a promise after delayInMs milliseconds.
- * @param delayInMs - The number of milliseconds to be delayed.
- * @param value - The value to be resolved with after a timeout of t milliseconds.
- * @param options - The options for delay - currently abort options
- *   @param abortSignal - The abortSignal associated with containing operation.
- *   @param abortErrorMsg - The abort error message associated with containing operation.
- * @returns - Resolved promise
- */
-function delay(delayInMs, value, options) {
-    return new Promise((resolve, reject) => {
-        let timer = undefined;
-        let onAborted = undefined;
-        const rejectOnAbort = () => {
-            return reject(new abortController.AbortError((options === null || options === void 0 ? void 0 : options.abortErrorMsg) ? options === null || options === void 0 ? void 0 : options.abortErrorMsg : StandardAbortMessage$1));
-        };
-        const removeListeners = () => {
-            if ((options === null || options === void 0 ? void 0 : options.abortSignal) && onAborted) {
-                options.abortSignal.removeEventListener("abort", onAborted);
-            }
-        };
-        onAborted = () => {
-            if (coreUtil.isDefined(timer)) {
-                clearTimeout(timer);
-            }
-            removeListeners();
-            return rejectOnAbort();
-        };
-        if ((options === null || options === void 0 ? void 0 : options.abortSignal) && options.abortSignal.aborted) {
-            return rejectOnAbort();
-        }
-        timer = setTimeout(() => {
-            removeListeners();
-            resolve(value);
-        }, delayInMs);
-        if (options === null || options === void 0 ? void 0 : options.abortSignal) {
-            options.abortSignal.addEventListener("abort", onAborted);
-        }
-    });
-}
-
-// Copyright (c) Microsoft Corporation.
 /**
  * Policy that retries the request as many times as configured for as long as the max retry time interval specified, each retry waiting longer to begin than the last time.
  * @param retryCount - Maximum number of retries.
@@ -5751,7 +5723,7 @@ async function retry$1(policy, request, response, retryData, requestError) {
     if (!isAborted && shouldRetry(policy.retryCount, shouldPolicyRetry, retryData, response)) {
         logger.info(`Retrying request in ${retryData.retryInterval}`);
         try {
-            await delay(retryData.retryInterval);
+            await coreUtil.delay(retryData.retryInterval);
             const res = await policy._nextPolicy.sendRequest(request.clone());
             return retry$1(policy, request, res, retryData);
         }
@@ -6046,7 +6018,7 @@ async function beginRefresh(getAccessToken, retryIntervalInMs, timeoutInMs) {
     }
     let token = await tryGetAccessToken();
     while (token === null) {
-        await delay(retryIntervalInMs);
+        await coreUtil.delay(retryIntervalInMs);
         token = await tryGetAccessToken();
     }
     return token;
@@ -6578,7 +6550,7 @@ async function getRegistrationStatus(policy, url, originalRequest) {
         return true;
     }
     else {
-        await delay(policy._retryTimeout * 1000);
+        await coreUtil.delay(policy._retryTimeout * 1000);
         return getRegistrationStatus(policy, url, originalRequest);
     }
 }
@@ -6670,7 +6642,7 @@ async function retry(policy, request, operationResponse, err, retryData) {
     if (shouldRetry(policy.retryCount, shouldPolicyRetry, retryData, operationResponse, err)) {
         // If previous operation ended with an error and the policy allows a retry, do that
         try {
-            await delay(retryData.retryInterval);
+            await coreUtil.delay(retryData.retryInterval);
             return policy._nextPolicy.sendRequest(request.clone());
         }
         catch (nestedErr) {
@@ -6745,7 +6717,7 @@ class ThrottlingRetryPolicy extends BaseRequestPolicy {
             const delayInMs = ThrottlingRetryPolicy.parseRetryAfterHeader(retryAfterHeader);
             if (delayInMs) {
                 this.numberOfRetries += 1;
-                await delay(delayInMs, undefined, {
+                await coreUtil.delay(delayInMs, {
                     abortSignal: httpRequest.abortSignal,
                     abortErrorMsg: StandardAbortMessage,
                 });
@@ -7701,6 +7673,10 @@ class TopicCredentials extends ApiKeyCredentials {
     }
 }
 
+Object.defineProperty(exports, "delay", ({
+    enumerable: true,
+    get: function () { return coreUtil.delay; }
+}));
 Object.defineProperty(exports, "isTokenCredential", ({
     enumerable: true,
     get: function () { return coreAuth.isTokenCredential; }
@@ -7728,7 +7704,6 @@ exports.applyMixins = applyMixins;
 exports.bearerTokenAuthenticationPolicy = bearerTokenAuthenticationPolicy;
 exports.createPipelineFromOptions = createPipelineFromOptions;
 exports.createSpanFunction = createSpanFunction;
-exports.delay = delay;
 exports.deserializationPolicy = deserializationPolicy;
 exports.deserializeResponseBody = deserializeResponseBody;
 exports.disableResponseDecompressionPolicy = disableResponseDecompressionPolicy;
@@ -46276,7 +46251,7 @@ class MemoryCookieStore extends Store {
   constructor() {
     super();
     this.synchronous = true;
-    this.idx = {};
+    this.idx = Object.create(null);
     const customInspectSymbol = getCustomInspectSymbol();
     if (customInspectSymbol) {
       this[customInspectSymbol] = this.inspect;
@@ -46348,10 +46323,10 @@ class MemoryCookieStore extends Store {
 
   putCookie(cookie, cb) {
     if (!this.idx[cookie.domain]) {
-      this.idx[cookie.domain] = {};
+      this.idx[cookie.domain] = Object.create(null);
     }
     if (!this.idx[cookie.domain][cookie.path]) {
-      this.idx[cookie.domain][cookie.path] = {};
+      this.idx[cookie.domain][cookie.path] = Object.create(null);
     }
     this.idx[cookie.domain][cookie.path][cookie.key] = cookie;
     cb(null);
@@ -46383,7 +46358,7 @@ class MemoryCookieStore extends Store {
     return cb(null);
   }
   removeAllCookies(cb) {
-    this.idx = {};
+    this.idx = Object.create(null);
     return cb(null);
   }
   getAllCookies(cb) {
@@ -46433,9 +46408,9 @@ exports.m = MemoryCookieStore;
 function inspectFallback(val) {
   const domains = Object.keys(val);
   if (domains.length === 0) {
-    return "{}";
+    return "[Object: null prototype] {}";
   }
-  let result = "{\n";
+  let result = "[Object: null prototype] {\n";
   Object.keys(val).forEach((domain, i) => {
     result += formatDomain(domain, val[domain]);
     if (i < domains.length - 1) {
@@ -46449,7 +46424,7 @@ function inspectFallback(val) {
 
 function formatDomain(domainName, domainValue) {
   const indent = "  ";
-  let result = `${indent}'${domainName}': {\n`;
+  let result = `${indent}'${domainName}': [Object: null prototype] {\n`;
   Object.keys(domainValue).forEach((path, i, paths) => {
     result += formatPath(path, domainValue[path]);
     if (i < paths.length - 1) {
@@ -46463,7 +46438,7 @@ function formatDomain(domainName, domainValue) {
 
 function formatPath(pathName, pathValue) {
   const indent = "    ";
-  let result = `${indent}'${pathName}': {\n`;
+  let result = `${indent}'${pathName}': [Object: null prototype] {\n`;
   Object.keys(pathValue).forEach((cookieName, i, cookieNames) => {
     const cookie = pathValue[cookieName];
     result += `      ${cookieName}: ${cookie.inspect()}`;
@@ -46941,7 +46916,7 @@ exports.validate = validate;
 /***/ ((module) => {
 
 // generated by genversion
-module.exports = '4.1.2'
+module.exports = '4.1.3'
 
 
 /***/ }),
@@ -51337,14 +51312,14 @@ module.exports.implForWrapper = function (wrapper) {
       this.saxParser.onopentag = (function(_this) {
         return function(node) {
           var key, newValue, obj, processedKey, ref;
-          obj = {};
+          obj = Object.create(null);
           obj[charkey] = "";
           if (!_this.options.ignoreAttrs) {
             ref = node.attributes;
             for (key in ref) {
               if (!hasProp.call(ref, key)) continue;
               if (!(attrkey in obj) && !_this.options.mergeAttrs) {
-                obj[attrkey] = {};
+                obj[attrkey] = Object.create(null);
               }
               newValue = _this.options.attrValueProcessors ? processItem(_this.options.attrValueProcessors, node.attributes[key], key) : node.attributes[key];
               processedKey = _this.options.attrNameProcessors ? processItem(_this.options.attrNameProcessors, key) : key;
@@ -51394,7 +51369,11 @@ module.exports.implForWrapper = function (wrapper) {
             }
           }
           if (isEmpty(obj)) {
-            obj = _this.options.emptyTag !== '' ? _this.options.emptyTag : emptyStr;
+            if (typeof _this.options.emptyTag === 'function') {
+              obj = _this.options.emptyTag();
+            } else {
+              obj = _this.options.emptyTag !== '' ? _this.options.emptyTag : emptyStr;
+            }
           }
           if (_this.options.validator != null) {
             xpath = "/" + ((function() {
@@ -51418,7 +51397,7 @@ module.exports.implForWrapper = function (wrapper) {
           }
           if (_this.options.explicitChildren && !_this.options.mergeAttrs && typeof obj === 'object') {
             if (!_this.options.preserveChildrenOrder) {
-              node = {};
+              node = Object.create(null);
               if (_this.options.attrkey in obj) {
                 node[_this.options.attrkey] = obj[_this.options.attrkey];
                 delete obj[_this.options.attrkey];
@@ -51433,7 +51412,7 @@ module.exports.implForWrapper = function (wrapper) {
               obj = node;
             } else if (s) {
               s[_this.options.childkey] = s[_this.options.childkey] || [];
-              objClone = {};
+              objClone = Object.create(null);
               for (key in obj) {
                 if (!hasProp.call(obj, key)) continue;
                 objClone[key] = obj[key];
@@ -51450,7 +51429,7 @@ module.exports.implForWrapper = function (wrapper) {
           } else {
             if (_this.options.explicitRoot) {
               old = obj;
-              obj = {};
+              obj = Object.create(null);
               obj[nodeName] = old;
             }
             _this.resultObject = obj;
@@ -55962,7 +55941,7 @@ module.exports.implForWrapper = function (wrapper) {
 
 /***/ }),
 
-/***/ 6373:
+/***/ 4570:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -55979,11 +55958,11 @@ function loadConfigFromInputs() {
     };
 }
 exports.loadConfigFromInputs = loadConfigFromInputs;
-
+//# sourceMappingURL=config.js.map
 
 /***/ }),
 
-/***/ 6232:
+/***/ 7129:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -56007,13 +55986,16 @@ async function download(connectionString, name, path, container) {
         }
         const dst = (0, path_1.join)(path || name, (0, path_1.relative)(name, blob.name));
         core.info(`Downloading ${blob.name} to ${dst} ...`);
-        await fs_1.promises.mkdir((0, path_1.dirname)(dst), { recursive: true });
+        // Check if the folder exists before attempting to create it
+        if (!(0, fs_1.existsSync)((0, path_1.dirname)(dst))) {
+            await fs_1.promises.mkdir((0, path_1.dirname)(dst), { recursive: true });
+        }
         const blockClient = await containerClient.getBlockBlobClient(blob.name);
         await blockClient.downloadToFile(dst);
     }
 }
 exports.download = download;
-
+//# sourceMappingURL=download.js.map
 
 /***/ }),
 
@@ -56240,8 +56222,8 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(4351);
 const core = tslib_1.__importStar(__nccwpck_require__(2186));
-const download_1 = __nccwpck_require__(6232);
-const config_1 = __nccwpck_require__(6373);
+const download_1 = __nccwpck_require__(7129);
+const config_1 = __nccwpck_require__(4570);
 async function main() {
     const config = (0, config_1.loadConfigFromInputs)();
     core.debug(`Config: ${config}`);
