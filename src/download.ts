@@ -1,6 +1,6 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import * as core from '@actions/core';
-import { promises as fs } from 'fs';
+import { promises as fs, existsSync } from 'fs';
 import { dirname, join, relative } from 'path';
 
 export async function download(
@@ -24,7 +24,12 @@ export async function download(
     }
     const dst = join(path || name, relative(name, blob.name));
     core.info(`Downloading ${blob.name} to ${dst} ...`);
-    await fs.mkdir(dirname(dst), { recursive: true });
+
+    // Check if the folder exists before attempting to create it
+    if (!existsSync(dirname(dst))) {
+      await fs.mkdir(dirname(dst), { recursive: true });
+    }
+
     const blockClient = await containerClient.getBlockBlobClient(blob.name);
     await blockClient.downloadToFile(dst);
   }
