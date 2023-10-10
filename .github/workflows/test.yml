@@ -66,3 +66,20 @@ jobs:
           echo "-----------------------------------"
           test -d path/to/download2/nested
           test -f path/to/download2/nested/Hello.txt
+
+      # Try to reproduce issue #22
+      # https://github.com/fixpoint/azblob-download-artifact/issues/22
+      - name: Download to a specific path (again)
+        uses: ./
+        with:
+          connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          name: 'azblob-download-artifact/path/to'
+          path: 'path/to/download2'
+
+      - name: Confirm
+        shell: bash
+        run: |
+          find ./path/to/download2
+          echo "-----------------------------------"
+          test -d path/to/download2/nested
+          test -f path/to/download2/nested/Hello.txt
