@@ -9,9 +9,8 @@ export async function download(
   path: string,
   container: string,
 ) {
-  const serviceClient = await BlobServiceClient.fromConnectionString(
-    connectionString,
-  );
+  const serviceClient =
+    await BlobServiceClient.fromConnectionString(connectionString);
 
   // Create container if necessary
   core.info(`Get a container "${container}" ...`);
